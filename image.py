@@ -1,6 +1,8 @@
 import os
+import threading
 import cv2
 import numpy as np
+
 
 import pprint as pp
 
@@ -13,7 +15,6 @@ editable_image = None
 
 class ImageViewer:
     #TODO: implement backhround caching
-    #TODO: Refactor image imdex system
     def __init__(self) -> None:
         self.opened_windows : int = 0
         self.current_path : str = ""
@@ -78,37 +79,56 @@ class ImageViewer:
         Arrows right/left - go forward/backward
         q - exit''')
     def __change_blue(*args):
+        #TODO: implement differencial variables
         #print("ARGS ", args)
         global editable_image
         #for i in range(500):
-        editable_image[:,:,0] = 255
+        editable_image[:,:,0] += args[1]
         cv2.imshow("Editor", editable_image)
+        editable_image[:,:,0] -= args[1]
         print(editable_image[0,0])
-        #print(args[1])
     def __change_green(*args):
         #print("ARGS ", args)
         global editable_image
         #for i in range(500):
-        editable_image[:,:,1] = 255
+        editable_image[:,:,1] += args[1]
         cv2.imshow("Editor", editable_image)
+        editable_image[:,:,1] -= args[1]
         print(editable_image[0,0])
-        #print(args[1])
     def __change_red(*args):
         #print("ARGS ", args)
         global editable_image
         #for i in range(500):
-        editable_image[:,:,2] = 255
+        editable_image[:,:,2] += args[1]
         cv2.imshow("Editor", editable_image)
+        editable_image[:,:,2] -= args[1]
         print(editable_image[0,0])
-        #print(args[1])
+    def __invert_colors(self):
+        global editable_image
+        w, h, _ = editable_image.shape
+        editable_image[:,:] = 255 - editable_image[:,:]
+        cv2.imshow("Editor", editable_image)
+    def __change_levels(self):
+        global editable_image
+        cv2.createTrackbar("Blue", "Editor", 0, 255, self.__change_blue)
+        cv2.createTrackbar("Green", "Editor", 0, 255, self.__change_green)
+        cv2.createTrackbar("Red", "Editor", 0, 255, self.__change_red)
     def edit_mode(self):
+        #TODO: Define a separate function for color correction
+        #TODO: Add something else
         global editable_image
         print("Edit mode enabled")
         editable_image = self.current_image
         cv2.namedWindow("Editor")
-        #cv2.createTrackbar("Blue", "Editor", 127, 255, self.__change_blue)
-        cv2.createTrackbar("Green", "Editor", 127, 255, self.__change_green)
-        #cv2.createTrackbar("Red", "Editor", 127, 255, self.__change_red)
+        cv2.imshow("Editor", editable_image)
+        while True:
+            key_pressed = cv2.waitKey(0)
+            if key_pressed & 0xFF == ord("i"):
+                self.__invert_colors()
+            if key_pressed & 0xff == ord('c'):
+                self.__change_levels()
+            elif key_pressed & 0xFF == ord('q'):
+                exit()
     def _debug(self):
         print(type(self.current_path), type(self.opened_windows))
 
